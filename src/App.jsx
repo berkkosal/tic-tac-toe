@@ -2,7 +2,9 @@ import Player from './components/Player';
 import GameBoard from './components/GameBoard';
 import { useState } from 'react';
 import Log from './components/Log';
+
 import { WINNING_COMBINATIONS } from './winning-combinations';
+import GameOver from './components/GameOver';
 
 
 const initialGameBoard = [
@@ -25,12 +27,13 @@ function derivedActivePlayer(gameTurns) {
 function App() {
 
   // const [activePlayer, setActivePlayer] = useState('X');
-  const [gameTurns, setGameTurns] = useState([])
+  const [gameTurns, setGameTurns] = useState([]);
   //Lifting state up, child componentlerin ikisininde ihtiyacı oluyorsa en yakın ataya taşıyorsun state'i.
 
   const activePlayer = derivedActivePlayer(gameTurns);
 
-  let gameBoard = initialGameBoard;
+  //Deep copy gerekiyor initialGameBoard'a
+  let gameBoard = [...initialGameBoard.map(array=>[...array])];
 
   //Derived state var. Burada bir state management yok.
   for (const turn of gameTurns) {
@@ -40,7 +43,7 @@ function App() {
     gameBoard[row][col] = player;
   }
 
-  let winner = null;
+  let winner;
   for (const combination of WINNING_COMBINATIONS) {
     const firstSquareSymbol = gameBoard[combination[0].row][combination[0].column];
     const secondSquareSymbol = gameBoard[combination[1].row][combination[1].column];
@@ -54,6 +57,7 @@ function App() {
 
   }
 
+  const hasDraw = gameTurns.length === 9 && !winner;
 
   function handleSelectSquare(rowIndex, colIndex) {
     // setActivePlayer((curActivePlayer) => curActivePlayer === 'X' ? 'O' : 'X');
@@ -68,6 +72,11 @@ function App() {
       return updatedTurns;
     });
   }
+
+  function handleRestart(){
+    setGameTurns([]);
+  }
+
   return (
     <main>
       <div id="game-container">
@@ -81,7 +90,7 @@ function App() {
             symbol='O'
             isActive={activePlayer === 'O'} />
         </ol>
-        {winner && <p>You won, {winner}!</p>}
+        {(winner || hasDraw) && <GameOver winner={winner} onRestart={handleRestart}/>}
         <GameBoard
           onSelectSquare={handleSelectSquare}
           board={gameBoard}
